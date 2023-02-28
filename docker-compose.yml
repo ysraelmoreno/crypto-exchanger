@@ -1,0 +1,51 @@
+services:
+  frontend:
+    container_name: react_ui
+    image: react-ui:1.0.0
+    build:
+      context: ./crypto-exchanger-ui
+      target: development
+      dockerfile: ./Dockerfile
+    command: yarn dev --host
+    ports:
+      - 5173:5173
+    volumes:
+      - ./crypto-exchanger-ui:/app
+    restart: unless-stopped
+
+  backend:
+    container_name: nestjs_api
+    image: nestjs-api:1.0.0
+    env_file:
+      - ./crypto-exchanger-service/.env
+    build:
+      context: ./crypto-exchanger-service
+      target: development
+      dockerfile: ./Dockerfile
+    command: yarn start:dev
+    ports:
+      - 3000:3000
+      - 9229:9229
+    volumes:
+      - ./crypto-exchanger-service:/app
+    restart: unless-stopped
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - 27017:27017
+    volumes:
+      - db-data:/data/db
+
+volumes:
+  db-data:
+
+configs:
+  httpd-config:
+    external: true
