@@ -29,7 +29,7 @@ export class CurrencyService implements ICurrencyService {
     if (!response || response.length === 0) {
       const data = (
         await this.httpService.axiosRef.get(
-          `http://api.coinlayer.com/live?access_key=decc34323f4a4352fb0116cb64668e7f`,
+          `http://api.coinlayer.com/live?access_key=${process.env.COIN_LAYER_ACCESS_KEY}`,
         )
       ).data.rates;
 
@@ -43,7 +43,7 @@ export class CurrencyService implements ICurrencyService {
 
       const data = (
         await this.httpService.axiosRef.get(
-          `http://api.coinlayer.com/live?access_key=decc34323f4a4352fb0116cb64668e7f`,
+          `http://api.coinlayer.com/live?access_key=${process.env.COIN_LAYER_ACCESS_KEY}`,
         )
       ).data.rates;
 
