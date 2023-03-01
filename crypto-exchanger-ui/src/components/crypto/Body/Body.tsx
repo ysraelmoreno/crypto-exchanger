@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import Table, {
   TableBody,
   TableData,
@@ -9,7 +10,6 @@ import { useWebSocket } from "@/contexts/WebSocket";
 import useMediaQuery from "@/hooks/useMediaQuery";
 import { ExchangesType } from "@/interfaces/exchange";
 import { api } from "@/services/api";
-import { useEffect, useState } from "react";
 import CurrencyTypeDisplay from "./CurrencyTypeDisplay";
 import MobileTable from "./MobileTable";
 import { BodyContainer } from "./styles";

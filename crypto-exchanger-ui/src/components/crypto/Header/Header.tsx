@@ -1,3 +1,4 @@
+import { useEffect, useState, MouseEvent } from "react";
 import Select, { SelectOption } from "@/components/generics/Select";
 import {
   ActionsContainer,
@@ -12,7 +13,6 @@ import UsIcon from "@/assets/us.svg";
 import Input from "@/components/generics/Input";
 import Button from "@/components/generics/Button";
 import { CryptoIcons, CurrencyIcons } from "@/interfaces/currency";
-import { useEffect, useState, MouseEvent } from "react";
 import { api } from "@/services/api";
 import { useWebSocket } from "@/contexts/WebSocket";
 import { ExchangesType } from "@/interfaces/exchange";
@@ -32,10 +32,18 @@ function Header() {
 
   const socket = useWebSocket();
 
+  const emitEventToSocket = (data: string) => {
+    clearTimeout(timer);
+
+    const newTimeout = setTimeout(() => {
+      socket.emit("saveCurrenciesConversion", data);
+    }, 1000);
+
+    setTimer(newTimeout);
+  };
+
   const onSubmit = (ev: MouseEvent<HTMLButtonElement>) => {
     ev.preventDefault();
-
-    clearTimeout(timer);
 
     const exchangedData = {
       dateTime: new Date().toString(),
@@ -46,22 +54,18 @@ function Header() {
       type: ExchangesType.EXCHANGED,
     };
 
-    socket.emit("saveCurrenciesConversion", JSON.stringify(exchangedData));
+    emitEventToSocket(JSON.stringify(exchangedData));
   };
 
   useEffect(() => {
     (async () => {
-      const response = await api.get("/currency/rates");
+      const [rates, currency] = await Promise.all([
+        api.get("/currency/rates"),
+        api.get("/currency"),
+      ]);
 
-      setRates(response.data.rates);
-    })();
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      const response = await api.get("/currency");
-
-      setData(response.data);
+      setRates(rates.data.rates);
+      setData(currency.data);
       setLoading(false);
     })();
   }, []);
@@ -117,22 +121,17 @@ function Header() {
                 );
 
                 setSecondAmount(Number(ev.target.value) * rate.rate);
-                clearTimeout(timer);
 
-                const newTimeout = setTimeout(() => {
-                  socket.emit(
-                    "saveCurrenciesConversion",
-                    JSON.stringify({
-                      dateTime: new Date().toString(),
-                      firstAmount: ev.target.value,
-                      secondAmount: Number(ev.target.value) * rate.rate,
-                      currencyFrom,
-                      currencyTo,
-                      type: ExchangesType.LIVE,
-                    })
-                  );
-                }, 1000);
-                setTimer(newTimeout);
+                emitEventToSocket(
+                  JSON.stringify({
+                    dateTime: new Date().toString(),
+                    firstAmount: ev.target.value,
+                    secondAmount: Number(ev.target.value) * rate.rate,
+                    currencyFrom,
+                    currencyTo,
+                    type: ExchangesType.LIVE,
+                  })
+                );
               }}
               value={firstAmount}
             />
@@ -163,29 +162,22 @@ function Header() {
               onChange={(ev) => {
                 setSecondAmount(Number(ev.target.value));
 
-                clearTimeout(timer);
-
                 const findCurrency = rates.find(
                   (rate: any) => rate.name === currencyFrom
                 );
 
                 setFirstAmount(Number(ev.target.value) / findCurrency.rate);
 
-                const newTimeout = setTimeout(() => {
-                  socket.emit(
-                    "saveCurrenciesConversion",
-                    JSON.stringify({
-                      dateTime: new Date().toString(),
-                      firstAmount: Number(ev.target.value) / findCurrency.rate,
-                      secondAmount: ev.target.value,
-                      currencyFrom,
-                      currencyTo,
-                      type: ExchangesType.LIVE,
-                    })
-                  );
-                }, 1000);
-
-                setTimer(newTimeout);
+                emitEventToSocket(
+                  JSON.stringify({
+                    dateTime: new Date().toString(),
+                    firstAmount: Number(ev.target.value) / findCurrency.rate,
+                    secondAmount: ev.target.value,
+                    currencyFrom,
+                    currencyTo,
+                    type: ExchangesType.LIVE,
+                  })
+                );
               }}
               value={secondAmount}
             />
